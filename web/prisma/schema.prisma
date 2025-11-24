@@ -1,3 +1,4 @@
+// NOVO prisma/schema.prisma (meu antigo: Better Auth gera IDs no formato UUID...)
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -14,111 +15,92 @@ enum Role {
   SUPER_ADMIN
 }
 
-// modelos de exemplo abaixo (pode deletar)
-model Curso {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  descricao String
-  slug      String @unique
-
-  materiasRelacionadas CursoMateriaRelacionada[]
+enum PurchaseStatus {
+  pending
+  paid
+  shipped
+  delivered
+  cancelled
 }
-
-model CursoMateriaRelacionada {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-
-  curso   Curso  @relation(fields: [cursoId], references: [id])
-  cursoId String
-
-  materia   Materia @relation(fields: [materiaId], references: [id])
-  materiaId String
-
-  @@unique([cursoId, materiaId])
-}
-
-model Materia {
-  id                 String                    @id @default(uuid()) @map("_id")
-  name               String
-  descricao          String
-  cor                String
-  slug               String                    @unique
-  cursosRelacionados CursoMateriaRelacionada[]
-}
-
-model Licao {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId // id base do mongodb, + perfomance
-  name      String
-  descricao String
-  archived  Boolean? @default(false)
-}
-// modelos de exemplo acima (pode deletar)
 
 model User {
-  // nao mexer entre aqui >
-  id            String    @id @map("_id") // o id do user deve ser assim por causa do better auth
-  name          String
-  email         String    @unique
+  id            String   @id @default(uuid()) @map("_id")
+  name          String?
+  email         String   @unique
   emailVerified Boolean?
+  password      String?
   image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
+  role          Role     @default(USER)
+  purchaseIds   String[]
+  purchases     Purchase[] @relation("UserPurchases", fields: [purchaseIds], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   sessions      Session[]
   accounts      Account[]
-  role          Role      @default(USER)
-  // < e aqui
-
-
-
-  @@map("user")
 }
 
+model Product {
+  id          String   @id @default(uuid()) @map("_id")
+  name        String
+  description String
+  price       Float
+  imageUrl    String?
+  categoryIds String[]
+  categories  Category[] @relation("ProductCategories", fields: [categoryIds], references: [id])
+  purchaseIds String[]
+  purchases   Purchase[] @relation("PurchaseProducts", fields: [purchaseIds], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
+model Category {
+  id        String   @id @default(uuid()) @map("_id")
+  name      String   @unique
+  productIds String[]
+  products  Product[] @relation("ProductCategories", fields: [productIds], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
+model Purchase {
+  id         String          @id @default(uuid()) @map("_id")
+  priceTotal Float
+  status     PurchaseStatus  @default(pending)
+  productIds String[]
+  products   Product[] @relation("PurchaseProducts", fields: [productIds], references: [id])
+  userIds    String[]
+  users      User[]    @relation("UserPurchases", fields: [userIds], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
 
-
-// evitar mexer daqui pra baixo
-// nesses 3 modelos do better auth
+// ========= MODELOS OBRIGATÓRIOS DO BETTERAUTH =========
 model Session {
-  id        String   @id @map("_id")
+  id        String   @id @default(uuid()) @map("_id")
   expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
+  token     String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@map("session")
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
-  id                    String    @id @map("_id")
-  accountId             String
-  providerId            String
+  id                    String   @id @default(uuid()) @map("_id")
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerId            String
+  accountId             String
+  password              String?
   accessToken           String?
   refreshToken          String?
   idToken               String?
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
-
-  @@map("account")
-}
-
-model Verification {
-  id         String    @id @map("_id")
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
-
-  @@map("verification")
+  tokenType             String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
