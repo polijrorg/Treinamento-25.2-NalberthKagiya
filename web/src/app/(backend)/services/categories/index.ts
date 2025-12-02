@@ -13,7 +13,7 @@ export async function getCategoryById(id: string) {
   return prisma.category.findUnique({ where: { id } });
 }
 
-export async function updateCategory(id: string, data: Partial<any>) {
+export async function updateCategory(id: string, data: Record<string, unknown>) {
   return prisma.category.update({ where: { id }, data });
 }
 

@@ -19,7 +19,7 @@ export async function getProductById(id: string) {
   return prisma.product.findUnique({ where: { id } });
 }
 
-export async function updateProduct(id: string, data: Partial<any>) {
+export async function updateProduct(id: string, data: Record<string, unknown>) {
   return prisma.product.update({ where: { id }, data });
 }
 

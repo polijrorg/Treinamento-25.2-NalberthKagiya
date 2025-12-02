@@ -1,11 +1,9 @@
 // web/src/app/(backend)/api/purchases/[id]/status/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { idSchema } from "@/app/(backend)/schemas/base.schema";
 import {
   blockForbiddenRequests,
   returnInvalidDataErrors,
-  // zodErrorHandler, // ❌ Comentado (não usado)
 } from "@/utils/api";
 import { updatePurchaseStatus } from "@/app/(backend)/services/purchases";
 import type { Role } from "@/generated/prisma";
@@ -20,7 +18,7 @@ const allowedRoles: Record<string, Role[]> = {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> } // ✅ Corrigido
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const forbidden = await blockForbiddenRequests(request, allowedRoles.PATCH);
