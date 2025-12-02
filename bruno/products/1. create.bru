@@ -1,0 +1,31 @@
+meta {
+  name: 1. CREATE Product (ADMIN)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/{{folder}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sessionValue}}
+}
+
+body:json {
+  {
+    "name": "Dragão Infernal",
+    "description": "Dano crescente contra tanques",
+    "price": 129.90,
+    "imageUrl": "https://exemplo.com/dragao.jpg",
+    "categoryIds": []
+  }
+}
+
+script:post-response {
+  if (res.body && res.body.id) {
+    bru.setVar("productId", res.body.id);
+  }
+}

@@ -7,21 +7,28 @@ meta {
 post {
   url: {{baseUrl}}/auth/sign-in/email
   body: json
-  auth: inherit
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: http://localhost:3000
 }
 
 body:json {
   {
-    "email": "daniela63@yahoo.com", 
-    "password": "Teste123", 
-    "callbackURL": "/"
+    "email": "teste_20251124_0442@lojinha.com",
+    "password": "Senha123"
   }
 }
 
 script:post-response {
   if (res.body && res.body.token) {
     bru.setVar("sessionValue", res.body.token);
-  } else {
-    console.log("No ID found in response");
+    console.log("✅ Token salvo:", res.body.token);
+  }
+  if (res.body && res.body.user && res.body.user.id) {
+    bru.setVar("userId", res.body.user.id);
+    console.log("✅ User ID salvo:", res.body.user.id);
   }
 }
