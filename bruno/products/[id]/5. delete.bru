@@ -1,0 +1,15 @@
+meta {
+  name: 5. DELETE Product (ADMIN)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/products/bcd43116-ee06-4748-afaa-c16f3b39869b
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sessionValue}}
+}

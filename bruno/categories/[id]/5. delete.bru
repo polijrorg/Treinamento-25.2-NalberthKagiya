@@ -1,0 +1,15 @@
+meta {
+  name: 5. DELETE Category (ADMIN)
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/categories/e7335c2c-34e0-4d09-a276-0425c08c9019
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sessionValue}}
+}

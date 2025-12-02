@@ -1,0 +1,27 @@
+meta {
+  name: 1. CREATE Category (ADMIN)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/{{folder}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sessionValue}}
+}
+
+body:json {
+  {
+    "name": "Cartas Lendárias"
+  }
+}
+
+script:post-response {
+  if (res.body && res.body.id) {
+    bru.setVar("categoryId", res.body.id);
+  }
+}

@@ -1,28 +1,30 @@
 meta {
-  name: create
+  name: "1. CREATE USER (Admin)"
   type: http
-  seq: 2
+  seq: 1
 }
 
 post {
-  url: {{baseUrl}}/{{folder}}
+  url: {{baseUrl}}/auth/sign-up/email
   body: json
-  auth: inherit
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Origin: http://localhost:3000
 }
 
 body:json {
   {
-    "name": "{{$randomFullName}}",
-    "email": "{{$randomEmail}}",
+    "name": "Admin Teste",
+    "email": "admin@clashcards.com",
     "password": "Teste123",
-    "confirmPassword": "Teste123"
+    "callbackURL": "/"
   }
 }
 
 script:post-response {
-  if (res.body && res.body.id) {
-    bru.setVar("userId", res.body.id);
-  } else {
-    console.log("No ID found in response");
-  }
+  if (res.body?.token) bru.setVar("sessionValue", res.body.token);
+  if (res.body?.user?.id) bru.setVar("userId", res.body.user.id);
 }

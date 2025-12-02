@@ -1,0 +1,21 @@
+meta {
+  name: 4. UPDATE Category (ADMIN)
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/categories/cd493160-3149-4375-9de6-93137b792442
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sessionValue}}
+}
+
+body:json {
+  {
+    "name": "Cartas Lendárias (ATUALIZAÇÃO)"
+  }
+}

@@ -1,0 +1,22 @@
+meta {
+  name: 4. UPDATE Product (ADMIN)
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/products/06c72b76-3128-45bd-acdf-932f638a9d5a
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sessionValue}}
+}
+
+body:json {
+  {
+    "price": 99.99,
+    "description": "Preço Promocional!"
+  }
+}
