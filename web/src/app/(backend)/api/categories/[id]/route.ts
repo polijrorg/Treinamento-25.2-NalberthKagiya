@@ -1,49 +1,87 @@
 import { NextRequest, NextResponse } from "next/server";
 import { idSchema } from "@/app/(backend)/schemas/base.schema";
-import { validBody, blockForbiddenRequests, returnInvalidDataErrors } from "@/utils/api";
-
+import {
+  blockForbiddenRequests,
+  zodErrorHandler,
+} from "@/utils/api";
 import {
   getCategoryById,
   updateCategory,
-  deleteCategory
+  deleteCategory,
 } from "@/app/(backend)/services/categories";
-
 import { updateCategorySchema } from "@/app/(backend)/schemas/category.schema";
+import type { Role } from "@/generated/prisma"; // ← Importa o tipo Role
 
-const roles = { PATCH: ["ADMIN", "SUPER_ADMIN"], DELETE: ["SUPER_ADMIN"] };
+// ✅ Tipagem explícita como Role[]
+const allowedRoles: Record<string, Role[]> = {
+  PATCH: ["ADMIN", "SUPER_ADMIN"] as Role[],
+  DELETE: ["ADMIN", "SUPER_ADMIN"] as Role[],
+};
 
-export async function GET(req: Request, { params }: any) {
-  const { id } = await params;
-
-  if (!idSchema.safeParse(id).success)
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
-
-  const cat = await getCategoryById(id);
-  if (!cat)
-    return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
-
-  return NextResponse.json(cat);
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const validation = idSchema.safeParse(id);
+    if (!validation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+    const category = await getCategoryById(id);
+    if (!category) {
+      return NextResponse.json({ error: "Categoria não encontrada" }, { status: 404 });
+    }
+    return NextResponse.json(category);
+  } catch (error) {
+    return zodErrorHandler(error);
+  }
 }
 
-export async function PATCH(request: NextRequest, { params }: any) {
-  const forbidden = await blockForbiddenRequests(request, roles.PATCH);
-  if (forbidden) return forbidden;
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const forbidden = await blockForbiddenRequests(request, allowedRoles.PATCH);
+    if (forbidden) return forbidden;
 
-  const { id } = await params;
-  const body = await validBody(request);
+    const { id } = await params;
+    const validation = idSchema.safeParse(id);
+    if (!validation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
 
-  const parsed = updateCategorySchema.safeParse(body);
-  if (!parsed.success) return returnInvalidDataErrors(parsed.error);
+    const body = await request.json();
+    const parse = updateCategorySchema.safeParse(body);
+    if (!parse.success) {
+      return NextResponse.json({ error: "Dados inválidos", details: parse.error.issues }, { status: 400 });
+    }
 
-  const updated = await updateCategory(id, parsed.data);
-  return NextResponse.json(updated);
+    const updated = await updateCategory(id, parse.data);
+    return NextResponse.json(updated);
+  } catch (error) {
+    return zodErrorHandler(error);
+  }
 }
 
-export async function DELETE(request: NextRequest, { params }: any) {
-  const forbidden = await blockForbiddenRequests(request, roles.DELETE);
-  if (forbidden) return forbidden;
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const forbidden = await blockForbiddenRequests(request, allowedRoles.DELETE);
+    if (forbidden) return forbidden;
 
-  const { id } = await params;
-  const deleted = await deleteCategory(id);
-  return NextResponse.json(deleted);
+    const { id } = await params;
+    const validation = idSchema.safeParse(id);
+    if (!validation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
+    const deleted = await deleteCategory(id);
+    return NextResponse.json(deleted);
+  } catch (error) {
+    return zodErrorHandler(error);
+  }
 }

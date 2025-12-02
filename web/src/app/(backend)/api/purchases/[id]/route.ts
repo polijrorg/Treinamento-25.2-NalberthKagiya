@@ -1,3 +1,4 @@
+// web/src/app/(backend)/api/purchases/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { idSchema } from "@/app/(backend)/schemas/base.schema";
 import { blockForbiddenRequests } from "@/utils/api";
@@ -5,8 +6,12 @@ import {
   getPurchaseById,
   deletePurchase
 } from "@/app/(backend)/services/purchases";
+import type { Role } from "@/generated/prisma"; // 👈 adicionado
 
-const roles = { GET: ["USER", "ADMIN", "SUPER_ADMIN"], DELETE: ["SUPER_ADMIN"] };
+const roles = {
+  GET: ["USER", "ADMIN", "SUPER_ADMIN"] as Role[],
+  DELETE: ["ADMIN", "SUPER_ADMIN"] as Role[] // ✅ agora inclui ADMIN + tipado
+};
 
 export async function GET(request: Request, { params }: any) {
   const { id } = await params;
