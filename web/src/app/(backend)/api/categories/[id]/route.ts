@@ -27,14 +27,14 @@ export async function GET(
   try {
     const { id } = await params;
     const validation = idSchema.safeParse(id);
-    if (!validation.success)
+    if (!validation.success) {
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
-
-    const cat = await getCategoryById(id);
-    if (!cat)
+    }
+    const category = await getCategoryById(id);
+    if (!category) {
       return NextResponse.json({ error: "Categoria não encontrada" }, { status: 404 });
-
-    return NextResponse.json(cat);
+    }
+    return NextResponse.json(category);
   } catch (error) {
     return zodErrorHandler(error);
   }
@@ -49,10 +49,16 @@ export async function PATCH(
     if (forbidden) return forbidden;
 
     const { id } = await params;
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
     const body = await validBody(request);
     const validationResult = updateCategorySchema.safeParse(body);
-    if (!validationResult.success)
+    if (!validationResult.success) {
       return returnInvalidDataErrors(validationResult.error);
+    }
 
     const updated = await updateCategory(id, validationResult.data);
     return NextResponse.json(updated);
@@ -70,6 +76,11 @@ export async function DELETE(
     if (forbidden) return forbidden;
 
     const { id } = await params;
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+    }
+
     const deleted = await deleteCategory(id);
     return NextResponse.json(deleted);
   } catch (error) {

@@ -1,7 +1,12 @@
 // web/src/app/(backend)/api/purchases/[id]/status/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { blockForbiddenRequests, returnInvalidDataErrors } from '@/utils/api';
+import { idSchema } from '@/app/(backend)/schemas/base.schema';
+import {
+  blockForbiddenRequests,
+  returnInvalidDataErrors,
+  zodErrorHandler,
+} from '@/utils/api';
 import { updatePurchaseStatus } from '@/app/(backend)/services/purchases';
 import { sendEmail } from '@/utils/email';
 import OrderStatusEmail from '@/templates/OrderStatusEmail';
@@ -26,6 +31,13 @@ export async function PATCH(
     if (forbidden) return forbidden;
 
     const { id } = await params;
+
+    // ✅ Validação do ID (faltava na main)
+    const idValidation = idSchema.safeParse(id);
+    if (!idValidation.success) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+    }
+
     const body = await request.json();
     const statusValidation = statusSchema.safeParse(body);
     if (!statusValidation.success) {
@@ -43,10 +55,11 @@ export async function PATCH(
       const userId = updated.userIds[0];
       if (userId) {
         const user = await findUserById(userId);
-        if (user?.email) {
+        if (user?.email && user.name) {
           const validStatus = status as 'paid' | 'shipped' | 'delivered';
-          // ✅ Await aqui → render() retorna Promise<string>
-          const html = await render(OrderStatusEmail({ name: user.name || 'usuário', status: validStatus }));
+          const html = await render(
+            OrderStatusEmail({ name: user.name, status: validStatus })
+          );
           await sendEmail({
             to: user.email,
             subject: 'Atualização do seu pedido - Clash Cards',
@@ -59,6 +72,6 @@ export async function PATCH(
     return NextResponse.json(updated);
   } catch (error) {
     console.error('Erro na rota PATCH /status:', error);
-    return NextResponse.json({ error: 'Erro Interno do Servidor' }, { status: 500 });
+    return zodErrorHandler(error);
   }
 }
