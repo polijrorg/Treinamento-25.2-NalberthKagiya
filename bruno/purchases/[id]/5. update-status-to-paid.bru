@@ -1,0 +1,19 @@
+meta {
+  name: PATCH status to paid
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/purchases/{{purchaseId}}/status
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{sessionValue}}
+}
+
+body:json {
+  { "status": "delivered" }
+}
