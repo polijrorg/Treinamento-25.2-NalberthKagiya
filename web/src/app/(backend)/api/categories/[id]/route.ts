@@ -1,7 +1,10 @@
+// web/src/app/(backend)/api/categories/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { idSchema } from "@/app/(backend)/schemas/base.schema";
 import {
+  validBody,
   blockForbiddenRequests,
+  returnInvalidDataErrors,
   zodErrorHandler,
 } from "@/utils/api";
 import {
@@ -10,29 +13,28 @@ import {
   deleteCategory,
 } from "@/app/(backend)/services/categories";
 import { updateCategorySchema } from "@/app/(backend)/schemas/category.schema";
-import type { Role } from "@/generated/prisma"; // ← Importa o tipo Role
+import type { Role } from "@/generated/prisma";
 
-// ✅ Tipagem explícita como Role[]
 const allowedRoles: Record<string, Role[]> = {
   PATCH: ["ADMIN", "SUPER_ADMIN"] as Role[],
   DELETE: ["ADMIN", "SUPER_ADMIN"] as Role[],
 };
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const validation = idSchema.safeParse(id);
-    if (!validation.success) {
+    if (!validation.success)
       return NextResponse.json({ error: "ID inválido" }, { status: 400 });
-    }
-    const category = await getCategoryById(id);
-    if (!category) {
+
+    const cat = await getCategoryById(id);
+    if (!cat)
       return NextResponse.json({ error: "Categoria não encontrada" }, { status: 404 });
-    }
-    return NextResponse.json(category);
+
+    return NextResponse.json(cat);
   } catch (error) {
     return zodErrorHandler(error);
   }
@@ -47,18 +49,12 @@ export async function PATCH(
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const validation = idSchema.safeParse(id);
-    if (!validation.success) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
-    }
+    const body = await validBody(request);
+    const validationResult = updateCategorySchema.safeParse(body);
+    if (!validationResult.success)
+      return returnInvalidDataErrors(validationResult.error);
 
-    const body = await request.json();
-    const parse = updateCategorySchema.safeParse(body);
-    if (!parse.success) {
-      return NextResponse.json({ error: "Dados inválidos", details: parse.error.issues }, { status: 400 });
-    }
-
-    const updated = await updateCategory(id, parse.data);
+    const updated = await updateCategory(id, validationResult.data);
     return NextResponse.json(updated);
   } catch (error) {
     return zodErrorHandler(error);
@@ -74,11 +70,6 @@ export async function DELETE(
     if (forbidden) return forbidden;
 
     const { id } = await params;
-    const validation = idSchema.safeParse(id);
-    if (!validation.success) {
-      return NextResponse.json({ error: "ID inválido" }, { status: 400 });
-    }
-
     const deleted = await deleteCategory(id);
     return NextResponse.json(deleted);
   } catch (error) {
